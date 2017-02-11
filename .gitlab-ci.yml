@@ -1,0 +1,9 @@
+#before_script:
+#  - ls
+
+
+buildall:
+  script:
+    - make update
+    - sha256sum build/*.bin
+
