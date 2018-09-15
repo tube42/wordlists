@@ -1,6 +1,6 @@
 
 
-LN ?= en
+LANG ?= en
 
 # source files
 PROJ = parse_csv filter test modify conv_utf conv_ascii dump_map
@@ -21,26 +21,26 @@ EXE_DUMP_MAP  = build/dump_map.exe
 all: help
 
 help:
-	@echo Valid targets are: filter, test, show, update, clean, map
-	@echo the LN variable defines the language to be used
+	@echo Valid targets are: filter, test, update, clean, map
+	@echo the LANG variable defines the language to be used
 
 update: clean
-	make filter LN=sv
-	make filter LN=en
-	make filter LN=it
-	make filter LN=ru
+	make filter LANG=sv
+	make filter LANG=en
+	make filter LANG=it
+	make filter LANG=ru
 
 ##
 
-build/$(LN).mod: build/$(LN).raw $(EXE_MODIFY)
-	$(EXE_MODIFY) -i build/$(LN).raw -o build/$(LN).mod -a data/$(LN).add -r data/$(LN).remove
+build/$(LANG).mod: $(EXE_MODIFY) build/$(LANG).raw
+	$(EXE_MODIFY) -i build/$(LANG).raw -o build/$(LANG).mod -a data/$(LANG).add -r data/$(LANG).remove
 
 
-build/$(LN).bin: build/$(LN).mod $(EXE_FILTER)
-	$(EXE_FILTER) -m data/$(LN).map -i build/$(LN).mod -c data/$(LN).config -o build/$(LN).bin
+build/$(LANG).bin: $(EXE_FILTER) build/$(LANG).mod
+	$(EXE_FILTER) -m data/$(LANG).map -i build/$(LANG).mod -c data/$(LANG).config -o build/$(LANG).bin
 
-filter: build/$(LN).bin
-	ls -l build/$(LN).*
+filter: $(EXE_FILTER) build/$(LANG).bin
+	ls -l build/$(LANG).*
 
 # language-specific stuff
 
@@ -65,12 +65,12 @@ build/it.raw: data/it.txt
 build/%.exe: src/%.c src/common.c src/common.h build
 	gcc -O2 $< src/common.c -o $@
 
-test: $(EXE_TEST) build/$(LN).bin
-	$(EXE_TEST) build/$(LN).bin
+test: $(EXE_TEST) build/$(LANG).bin
+	$(EXE_TEST) build/$(LANG).bin
 
 
-map: build/$(LN).bin $(EXE_DUMP_MAP)
-	$(EXE_DUMP_MAP) build/$(LN).bin
+map: build/$(LANG).bin $(EXE_DUMP_MAP)
+	$(EXE_DUMP_MAP) build/$(LANG).bin
 
 
 ##
