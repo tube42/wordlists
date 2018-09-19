@@ -1,5 +1,4 @@
 
-
 LANG ?= en
 
 # source files
@@ -29,6 +28,7 @@ update: clean
 	make filter LANG=en
 	make filter LANG=it
 	make filter LANG=ru
+	make filter LANG=fr
 
 ##
 
@@ -58,6 +58,9 @@ build/sv.raw: data/sv.csv $(EXE_PARSE_CSV) $(EXE_CONV_ASCII)
 build/it.raw: data/it.txt
 	sort data/it.txt | uniq > $@
 
+build/fr.raw: data/fr.txt
+	sort data/fr.txt | uniq > $@
+	
 ##
 
 # the tools
