@@ -1,0 +1,17 @@
+# Fichier : fr.txt
+# Ce lexique de mots est la fusion de deux lexiques : celui de de Louis
+# Bronne, René Cougnenc et Serge Delbono et celui de JC Bellamy.
+# Ce lexique a ete realise par un collectif d'utilisateurs de BBS et
+# est mis dans le DOMAINE PUBLIC. La premiere mouture a ete finalisee
+# exploitation "DICO", compilable sous Un*x ou Ms-Dos entre autres.
+# Derniere mise a jour : 25 Avril 97
+# Realisee par : Rene Cougnenc (rene@hell.org), 
+# Louis Bronne (Louis.Bronne@ulg.ac.be), Serge Delbonno
+# 
+# Partie réalise par moi-meme :
+# tous les mots composes ont ete enleves, ainsi que les mots
+# contenant des espaces ou de la ponctuation (tiret, point apostrophe...)
+# De plus, tous les caracteres accentues ont ete remplaces par leur
+# equivalent non accentue
+#
+# Le fichier comprend 259469 mots dont une partie des communes françaises
