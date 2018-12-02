@@ -103,9 +103,8 @@ void save_words_without(char *filename, buffer *words, buffer *without)
 	rcnt++;
 	if(rcnt < MAX_REMOVE_PRINT) {
 	  printf("REMOVING: %s\n", words->data[i]);
-	} else {
+	} else if(rcnt == MAX_REMOVE_PRINT) {
 	  printf("REMOVING: ...\n");
-	  break;
 	}
       }
     }
