@@ -1,55 +1,23 @@
 
 #ifndef _COMMON_H_
-#define  _COMMON_H_
-
-
-/* configuration, change or uncomment these */
-
-typedef struct {
-    unsigned char cnt;
-    char code;
-    unsigned char data[6];
-} onemap;
-
-typedef struct {
-    int size;
-    onemap maps[40];
-} mappings;
+#define _COMMON_H_
 
 typedef struct  {
-    int curr, max;
-    char **data;
+	int curr, max;
+	char **data;
 } buffer;
 
 typedef struct {
-    int freq;
-    int points;
-    int is_vowel;
-    char letter;
-} charstats;
+	int from;
+	char to;
+} mapping;
 
 typedef struct {
-    int size;   
-    int freq_total;
-    charstats chars[48];
-} liststats;
-
-typedef struct {
-    int size;
-    char *words;
-    char name[64];
-    int size_min;
-    int size_max;
-    int allow_names;
-    int allow_abbreviations;
-    liststats stats;
-    mappings map;
-} wordlist;
+	int count;
+	mapping items[44];
+} mappings;
 
 
-
-extern void write_int32(FILE *fp, int);
-extern int read_int32(FILE *fp);
 extern int read_line(FILE *fp, char *buffer, int size);
 
 extern void buffer_init(buffer *b);
@@ -58,14 +26,17 @@ extern void buffer_add(buffer *b, char *data);
 extern int buffer_lookup(buffer *b, char *data);
 extern void sort_words( buffer *b);
 
-
-extern wordlist * wordlist_load(FILE *fp);
-extern void wordlist_free(wordlist *);
-extern int wordlist_lookup(wordlist *, char *word);
-
-
 extern int is_space(char c);
+extern int is_ascii(char *str);
 extern char *trim(char *str);
 
+extern int utf8_size_byte(char firstbyte);
+extern int utf8_size_code(int code);
+extern int utf8_read(char *buffer, int len, int *out);
+extern int utf8_write(int code, char *buffer, int len);
+
+extern void mappings_read(FILE *fp, mappings *mp);
+extern mapping *mappings_find_code(mappings *mp, int code);
+extern mapping *mappings_find_byte(mappings *mp, char c);
 
 #endif /* _COMMON_H_ */

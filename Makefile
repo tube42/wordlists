@@ -1,80 +1,84 @@
 
-LANG ?= en
+LANGUAGE ?= en
 
 # source files
-PROJ = parse_csv filter test modify conv_utf conv_ascii dump_map
-
+PROJ = publish test create map map_dump
 PROJ_EXE = $(foreach d,$(PROJ),build/$(d).exe)
 
 # binaries
-EXE_PARSE_CSV = build/parse_csv.exe
-EXE_FILTER    = build/filter.exe
+EXE_PUBLISH   = build/publish.exe
 EXE_TEST      = build/test.exe
-EXE_MODIFY    = build/modify.exe
-EXE_CONV_UTF  = build/conv_utf.exe
-EXE_CONV_ASCII= build/conv_ascii.exe
-EXE_DUMP_MAP  = build/dump_map.exe
+EXE_CREATE    = build/create.exe
+EXE_MAP       = build/map.exe
+EXE_MAP_DUMP  = build/map_dump.exe
 
 ##
 
 all: help
 
 help:
-	@echo Valid targets are: filter, test, update, clean, map
-	@echo the LANG variable defines the language to be used
+	@echo Valid targets are: publish, test, update, clean, map
+	@echo the LANGUAGE variable defines the langauge to be used
 
 update: clean
-	make filter LANG=sv
-	make filter LANG=en
-	make filter LANG=it
-	make filter LANG=ru
-	make filter LANG=fr
+	make publish LANGUAGE=sv
+	make publish LANGUAGE=en
+	make publish LANGUAGE=it
+	make publish LANGUAGE=ru
+	make publish LANGUAGE=fr
+	make publish LANGUAGE=de
 
+exe: build $(PROJ_EXE)
 ##
 
-build/$(LANG).mod: $(EXE_MODIFY) build/$(LANG).raw
-	$(EXE_MODIFY) -i build/$(LANG).raw -o build/$(LANG).mod -a data/$(LANG).add -r data/$(LANG).remove
+# this will create a single file to be added / removed
+#
+# note: tr has problem with non-ascii letters
+
+build/$(LANGUAGE).add: data/$(LANGUAGE).add* $(EXE_MAP)
+	cat data/$(LANGUAGE).add* | tr '[:upper:]' '[:lower:]' | sort  | uniq > build/tmp
+	$(EXE_MAP) build/tmp data/$(LANGUAGE).map $@
+
+build/$(LANGUAGE).remove: data/$(LANGUAGE).remove* $(EXE_MAP)
+	cat data/$(LANGUAGE).remove* | tr '[:upper:]' '[:lower:]' | sort  | uniq > build/tmp
+	$(EXE_MAP) build/tmp data/$(LANGUAGE).map $@
+
+# from add & remove files create a single word list
+build/$(LANGUAGE).txt: $(EXE_CREATE) build/$(LANGUAGE).add build/$(LANGUAGE).remove
+	$(EXE_CREATE) -i build/$(LANGUAGE).add -r data/$(LANGUAGE).remove -o build/$(LANGUAGE).txt
 
 
-build/$(LANG).bin: $(EXE_FILTER) build/$(LANG).mod
-	$(EXE_FILTER) -m data/$(LANG).map -i build/$(LANG).mod -c data/$(LANG).config -o build/$(LANG).bin
+# from *.txt word list, keep words of specified length and create a bin forma wordlist
+build/$(LANGUAGE).bin: $(EXE_PUBLISH) build/$(LANGUAGE).txt
+	$(EXE_PUBLISH) -m data/$(LANGUAGE).map -i build/$(LANGUAGE).txt -c data/$(LANGUAGE).config -o build/$(LANGUAGE).bin
 
-filter: $(EXE_FILTER) build/$(LANG).bin
-	ls -l build/$(LANG).*
 
-# language-specific stuff
-
-build/ru.raw: data/ru.utf8 $(EXE_CONV_UTF)
-	$(EXE_CONV_UTF) data/ru.utf8 data/ru.map build/ru.tmp
-	sort build/ru.tmp | uniq > $@
-
-build/en.raw: data/en.txt
-	sort data/en.txt | uniq > $@
-
-build/sv.raw: data/sv.csv $(EXE_PARSE_CSV) $(EXE_CONV_ASCII)
-	$(EXE_CONV_ASCII) data/sv.csv data/sv.map2 build/sv.tmp
-	$(EXE_PARSE_CSV) < build/sv.tmp > $@
-
-build/it.raw: data/it.txt
-	sort data/it.txt | uniq > $@
-
-build/fr.raw: data/fr.txt
-	sort data/fr.txt | uniq > $@
-	
 ##
 
 # the tools
 
-build/%.exe: src/%.c src/common.c src/common.h build
-	gcc -O2 $< src/common.c -o $@
-
-test: $(EXE_TEST) build/$(LANG).bin
-	$(EXE_TEST) build/$(LANG).bin
+build/%.exe: src/%.c src/wordlist.* src/common.*
+	mkdir -p build
+	gcc -O2 -Wall $< src/wordlist.c src/common.c -o $@
 
 
-map: build/$(LANG).bin $(EXE_DUMP_MAP)
-	$(EXE_DUMP_MAP) build/$(LANG).bin
+map: build/$(LANGUAGE).bin $(EXE_MAP_DUMP)
+	$(EXE_MAP_DUMP) build/$(LANGUAGE).bin
 
+publish: $(EXE_PUBLISH) build/$(LANGUAGE).bin
+	ls -l build/$(LANGUAGE).*
+
+# examples
+
+build/%.class: src/%.java
+	mkdir -p build
+	javac $< -d build
+
+javatest: build/Wordlist.class build/$(LANGUAGE).bin
+	java -cp build WordlistTest build/$(LANGUAGE).bin
+
+test: $(EXE_TEST) build/$(LANGUAGE).bin
+	$(EXE_TEST) build/$(LANGUAGE).bin
 
 ##
 build:

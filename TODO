@@ -1,0 +1,4 @@
+
+* remove min/max from config
+* How to handle uppercase letters that 'tr' cannot convert?
+* Allow abbrevation & names does not work if we make everything lowercase at start

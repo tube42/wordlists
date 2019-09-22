@@ -1,6 +1,7 @@
 
-sv.csv is of unknown origin but it is assumed to come from an open word list
-possibly based on  the Swedish Dictionary for Spell Checking is maintained by Göran Andersson <goran@init.se>.
+sv.add1 was generated from a ISO-8859-1 CSV file unknown origin but it is assumed
+to have come from an open word list possibly based on the Swedish Dictionary
+for Spell Checking is maintained by Göran Andersson <goran@init.se>.
 
 
 Copyright © 2003-2012 Göran Andersson <goran@init.se>.

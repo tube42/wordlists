@@ -1,128 +1,126 @@
 
 /*
- * this file demonstrates s the search
- */ 
+ * this file demonstrates the search
+ */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-
 #include "common.h"
+#include "wordlist.h"
 
-/* to fix encoding mismatch problems for the swedish locale */
-char encoding_map[256];
 
-void setup_encoding()
+int mapping_find_code(wordlist *wl, int code, char *out)
 {
-    int i;
-    for(i = 0; i < 256; i++) encoding_map[i] = i;
-    
-    encoding_map[ 0x86] = 0xe5; // å
-    encoding_map[ 0x84] = 0xe4; // ä
-    encoding_map[ 0x94] = 0xf6; // ö
-    
-    encoding_map[ 0x8f] = 0xe5; // Å
-    encoding_map[ 0x8e] = 0xe4; // Ä
-    encoding_map[ 0x99] = 0xf6; // Ö    
+	int i;
+	for(i = 0; i < wl->count_charset; i++) {
+		if(wl->chars[i].unicode == code) {
+			*out = wl->chars[i].code;
+			return 1;
+		}
+	}
+	return 0;
 }
 
-void fix_encoding(char *str)
+int remove_unicode(wordlist *wl, char *str)
 {
-    char *tmp = str;
-    
-    while(*tmp) {
-        *tmp = encoding_map[ 0xFF & *tmp];
-        *tmp++;
-    }
+	int n, m , code, seen;
+	char *in;
+
+	seen = 0;
+	n = strlen(str);
+	in = str;
+
+	while(n > 0) {
+		m = utf8_read(str, n, &code);
+		if(m > 1) {
+			if(!mapping_find_code(wl, code, in++)) {
+				fprintf(stderr, "Found unicode not in this language: %02x\n", code);
+				return 0;
+			}
+		} else {
+			*in++ = code;
+		}
+		n -= m;
+		str += m;
+	}
+	*in = '\0'; /* terminate it */
+	return seen;
 }
 
-/****************************************************************/
-
-// just for testing and to show how slow it is :)
+/* just for testing */
 int linear_search(wordlist *wl, char *str)
 {
-    char *tmp = wl->words +1;
-    
-    while(*tmp != '\0') {
-        if(! strcmp(tmp, str)) return 1;        
-        while(*tmp++ != '\0') ;        
-    }
-    return 0;
+	char *tmp = wl->words +1;
+
+	while(*tmp != '\0') {
+	if(! strcmp(tmp, str)) return 1;
+	while(*tmp++ != '\0') ;
+	}
+	return 0;
 }
 
 void do_search(wordlist *wl)
 {
-    char line[64 + 1];
-    
-    for(;;) {
-        fprintf(stdout, "Enter word: ");
-        fflush(stdout);
-        
-        if(! read_line(stdin, line, 64+1))
-            return;
-        
-        if(line[0] == '\0')
-            return;
-        
-        fix_encoding(line); // XXX: encoding hach
-        
-        
-        printf("Search result for '%s': %d\n", line, wordlist_lookup(wl, line));
-//        printf("Linear: %d\n", linear_search(wl, line));
-    }
+	char line[64 + 1];
+	int s1, s2;
+	long t1, t2;
 
+	for(;;) {
+	fprintf(stdout, "Enter word (press ^C or type . to exit): ");
+	fflush(stdout);
+
+	if(! read_line(stdin, line, 64+1))
+		return;
+
+		if(!strcmp(line, ".") || strlen(line) == 0)
+		return;
+
+		if(remove_unicode(wl, line)) {
+			printf("Replaced input with '%s' to remove unicode\n", line);
+		}
+
+		t1 = clock();
+		s1 =  wordlist_lookup(wl, line);
+		t1 = clock() - t1;
+
+		t2 = clock();
+		s2 = linear_search(wl, line);
+		t2 = clock() - t2;
+
+	printf("Search result for '%s':\n", line);
+		printf("  Binary: %3d, %5d ms\n", s1, t1);
+		printf("  Linear: %3d, %5d ms\n", s2, t2);
+	}
 }
 
 /****************************************************************/
 
 int main(int argc, char **argv)
 {
-    wordlist *list;
-    FILE *fp;
-        
-    if(argc == 2) {
-        fp = fopen(argv[1], "rb");
-        if(!fp) {
-            printf("Unable top topen %s\n", argv[1]);
-            return 20;
-        }
-    } else {
-        printf("Usage %s dictionary.bin\n", argv[0]);
-        return 3;
-    }
-    
-    setup_encoding();
-    list = wordlist_load(fp);
-    {
-        // DEBUG
-        int i;
-        
-        printf("Dictionary: '%s', size %d-%d, %s %s\n",
-               list->name, list->size_min, list->size_max,
-               list->allow_names ? "includes names" : "",
-               list->allow_abbreviations ? "includes abbreviations" : ""
-               );
-        
-        for(i = 0; i < list->stats.size; i++) 
-            printf("%3d:  %c/%02x -> Freq=%-8d Point=%3d Type=%s\n", i, 
-                   list->stats.chars[i].letter,
-                   list->stats.chars[i].letter & 0xFF,
-                   list->stats.chars[i].freq,
-                   list->stats.chars[i].points,
-                   list->stats.chars[i].is_vowel ? "vowel" : "consonant"
-                   );
-    }
-    
-    if(list) {        
-        do_search(list);        
-        /* clean up */
-        wordlist_free(list);
-    } else  printf("Failed to read the dictionary\n");
-    
-    
-    /* Cleanup */
-    fclose(fp);
-    return 0;
+	wordlist *wl;
+	FILE *fp;
+
+	if(argc != 2) {
+		printf("Usage %s <wordlist.bin>\n", argv[0]);
+		exit(20);
+	}
+
+	fp = fopen(argv[1], "rb");
+	if(!fp) {
+		fprintf(stderr, "Unable to open %s\n", argv[1]);
+		exit(20);
+	}
+
+	wl = wordlist_load(fp);
+	fclose(fp);
+
+	printf("Loaded wordlist %s: %d words, %d  chars & %d bytes in total\n",
+		wl->name, wl->count_words, wl->count_charset, wl->size_words);
+
+	do_search(wl);
+	wordlist_free(wl);
+	return 0;
 }
 
