@@ -28,6 +28,9 @@ update: clean
 	make publish LANGUAGE=fr
 	make publish LANGUAGE=de
 
+dist: update
+	cd build && zip `date +%Y%M%d`.zip *.bin ../README.rst
+
 exe: build $(PROJ_EXE)
 ##
 
@@ -51,7 +54,6 @@ build/$(LANGUAGE).txt: $(EXE_CREATE) build/$(LANGUAGE).add build/$(LANGUAGE).rem
 # from *.txt word list, keep words of specified length and create a bin forma wordlist
 build/$(LANGUAGE).bin: $(EXE_PUBLISH) build/$(LANGUAGE).txt
 	$(EXE_PUBLISH) -m data/$(LANGUAGE).map -i build/$(LANGUAGE).txt -c data/$(LANGUAGE).config -o build/$(LANGUAGE).bin
-
 
 ##
 

@@ -28,6 +28,10 @@ To build all lists execute::
     make update
 
 The results will be in the build/ directory.
+To create a ZIP file with all lists::
+
+    make dist
+
 
 To search the list for one of the languages execute:::
 
